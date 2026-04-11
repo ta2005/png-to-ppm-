@@ -1,12 +1,9 @@
 package chunk;
 
-final public class IEND extends Chunk{
-    IEND(Chunk c){
-	super(c.length,c.type,c.data,c.crc);
-    }
+public record IEND(int length,int type,byte[]data,int crc) implements Chunk{
     @Override
     public void print(){
 	System.out.println("--- IEND Properties ---");
-	super.print();	
+	Chunk.super.print();	
     }
 }

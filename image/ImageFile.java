@@ -5,8 +5,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import chunk.Chunk;
 import chunk.IHDR;
+import chunk.IDAT;
 
 public class ImageFile{
+    //maybe the cursor will become private and it add a metod a get the next n bytes
     public int cursor;
     public byte[] data;
     public String inputFileName;
@@ -26,14 +28,18 @@ public class ImageFile{
 	}
 	System.out.println();
 	cursor+=8;
-	Chunk c = Chunk.of(this);
-	if(Chunk.getName(c.type())!="IHDR"){
+	Chunk c = Chunk.chunkParser(this);
+	if(c instanceof IHDR){
 	    h=(IHDR)c;
 	}	
+	c.print();
 	while(cursor<data.length){
-	    c = Chunk.of(this);
+	    c = Chunk.chunkParser(this);
 	    c.print();
-	}	
-    }
+	    if(c instanceof IDAT){
+		((IDAT)c).convert(this);
+	    }	
+	}
 
+    }
 }

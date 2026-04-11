@@ -3,61 +3,65 @@ package chunk;
 import java.util.Arrays;
 import image.ImageFile;
 
-sealed public class Chunk permits IHDR, IEND, IDAT {
+public sealed interface Chunk permits IHDR, IEND, IDAT {
 	// this is the length of the data of the chuck
-	int length;
-	int type;
-	byte data[];
-	int crc;
-	private static IHDR h = null;
+	int length();
 
-	protected Chunk(ImageFile i) {
+	int type();
+
+	byte[] data();
+
+	int crc();
+
+	public static Chunk chunkParser(ImageFile i) {
 		// i know this is inefficent but will handel it later
-		this.length = toInt(Arrays.copyOfRange(i.data, i.cursor, i.cursor + 4));
+		int length = toInt(Arrays.copyOfRange(i.data, i.cursor, i.cursor + 4));
 		i.cursor += 4;
-		this.type = toInt(Arrays.copyOfRange(i.data, i.cursor, i.cursor + 4));
+		int type = toInt(Arrays.copyOfRange(i.data, i.cursor, i.cursor + 4));
 		i.cursor += 4;
-		this.data = Arrays.copyOfRange(i.data, i.cursor, i.cursor + this.length);
-		i.cursor += this.length;
-		this.crc = toInt(Arrays.copyOfRange(i.data, i.cursor, i.cursor + 4));
+		byte[] data = Arrays.copyOfRange(i.data, i.cursor, i.cursor + length);
+		i.cursor += length;
+		int crc = toInt(Arrays.copyOfRange(i.data, i.cursor, i.cursor + 4));
 		i.cursor += 4;
-	}
 
-	protected Chunk(int length, int type, byte data[], int crc) {
-		this.length = length;
-		this.type = type;
-		this.data = data;
-		this.crc = crc;
-	}
-
-	static public Chunk of(ImageFile i) {
-		Chunk res = new Chunk(i);
-		return switch (Chunk.getName(res.type)) {
+		return switch (Chunk.getName(type)) {
 			case "IHDR" -> {
-				h = new IHDR(res);
-				yield h;
+				int cursor = 0;
+				int width = toInt(Arrays.copyOfRange(data, cursor, cursor + 4));
+				cursor += 4;
+				int height = toInt(Arrays.copyOfRange(data, cursor, cursor + 4));
+				cursor += 4;
+				byte bitDepth = data[cursor++];
+				byte colorType = data[cursor++];
+				byte compressionMethod = data[cursor++];
+				byte filterMethod = data[cursor++];
+				byte interlaceMethod = data[cursor++];
+				yield new IHDR(length, type, data, crc,width,height,bitDepth,colorType,compressionMethod,filterMethod,interlaceMethod);
 			}
-			case "IDAT" -> new IDAT(res,h);
-			default -> res;
+			case "IDAT" -> new IDAT( length,  type, data,  crc);
+			case "IEND" -> new IEND( length,  type, data,  crc);
+			default -> null;
 		};
 	}
 
-	protected int toInt(byte[] i) {
+	public static int toInt(byte[] i) {
 		// System.out.println(Arrays.toString(i));
 		int res = i[3] & 0xFF | (i[2] & 0xFF) << 8 | (i[1] & 0xFF) << 16 | (i[0] & 0xFF) << 24;
 		return res;
 	}
-	public int type(){
-	    return type;
-	}
-	static public String getName(int type) {
+
+	public static String getName(int type) {
 		return "" + (char) ((type >> 24) & 0xFF) +
 				(char) ((type >> 16) & 0xFF) +
 				(char) ((type >> 8) & 0xFF) +
 				(char) (type & 0xFF);
 	}
 
-	public void print() {
+	default void print() {
+		int type = this.type();
+		int length = this.length();
+		byte[] data = this.data();
+		int crc = this.crc();
 		String typeName = "" +
 				(char) ((type >> 24) & 0xFF) +
 				(char) ((type >> 16) & 0xFF) +
