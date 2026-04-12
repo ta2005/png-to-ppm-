@@ -11,7 +11,7 @@ enum ChunckType{
 
 
 public class Main{
-    public static void main(String [] args){
+    public static void main(String [] args) throws Exception{
 	var ImageFile = new ImageFile("Screenshot 2026-02-15 at 15-32-31 Status - Codeforces.png");
 	ImageFile.show();
     }

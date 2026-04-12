@@ -3,6 +3,7 @@ package image;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import chunk.Chunk;
 import chunk.IHDR;
 import chunk.IDAT;
@@ -22,24 +23,11 @@ public class ImageFile{
 	    System.out.println(e.getMessage());
 	}
     }
-    public void show(){
-	for(int i=0;i<8;i++){
-	    System.out.printf("%02X ",data[i]&0xFF);
-	}
-	System.out.println();
-	cursor+=8;
-	Chunk c = Chunk.chunkParser(this);
-	if(c instanceof IHDR){
-	    h=(IHDR)c;
-	}	
-	c.print();
-	while(cursor<data.length){
-	    c = Chunk.chunkParser(this);
+    public void show() throws IllegalArgumentException{
+	var l = Chunk.chunkTokenizer(this);
+	for(var c:l){
 	    c.print();
-	    if(c instanceof IDAT){
-		((IDAT)c).convert(this);
-	    }	
 	}
-
     }
+
 }

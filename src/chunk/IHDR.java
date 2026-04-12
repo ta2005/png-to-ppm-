@@ -1,5 +1,7 @@
 package chunk;
 
+import exceptions.TokenizationException;
+
 public record IHDR(int length, int type, byte[] data, int crc,
 		int width,
 		int height,
@@ -10,6 +12,18 @@ public record IHDR(int length, int type, byte[] data, int crc,
 		byte interlaceMethod
 
 ) implements Chunk {
+	public IHDR{
+	    if (length != 13){
+		throw new IllegalArgumentException("header length must be 13");
+	    }else if(compressionMethod != 0){
+		throw new IllegalArgumentException("invalid compression Method");
+	    }else if(filterMethod!=0){
+		throw new IllegalArgumentException("invalid filter method");
+	    }else if(!(interlaceMethod==0 || interlaceMethod==1)){
+		throw new IllegalArgumentException("invalid interlace method");
+	    }
+	    //to add check colortype and bit depth match
+	}
 	@Override
 	public void print() {
 		Chunk.super.print();
