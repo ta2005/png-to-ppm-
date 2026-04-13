@@ -11,13 +11,27 @@ public class Parser {
 	private byte[] imageData = new byte[0];
 	private byte[] colorPallete;
 	private int current = 0;
+	private IHDR hdr;
 
 	public Parser(List<Chunk> l) throws ParserException {
 		this.l = l;
-		header();
+		IHDR hdr = header();
+		this.hdr=hdr;
+
+		if (hdr.colorType()!=3 && match(ChunkType.PLTE)){
+		    pallete();
+		}else if(hdr.colorType() == 3 && match(ChunkType.PLTE)){
+		    throw new ParserException("Color type 3 forces no plte");
+		}
+
+		idat();
+		iend();
 	}
 	public byte[] getData(){
 	    return imageData;
+	}
+	public IHDR getHead(){
+	    return hdr;
 	}
 
 	private int calcScanSize(IHDR h) {
@@ -31,17 +45,21 @@ public class Parser {
 	    return 1 + (bitsPerChannel * h.width() + 7) / 8;
 	}
 
-	private void header() throws ParserException{
-	    //TODO:this the header parser  it has three mode depending on the color type
-	    IHDR hdr = (IHDR)consume(ChunkType.IHDR);
-	    // imageData=new byte[calcScanSize(hdr)*hdr.height()];
-	    idat();
+	private IHDR header() throws ParserException{
+	    return (IHDR)consume(ChunkType.IHDR);
+		//    switch(hdr.colorType()){
+		// case 3 -> pallete();
+		// case 0,4 -> idat();
+		// case 2,6 -> {
+		//     if (match(ChunkType.PLTE)) pallete();
+		//     idat();
+		// }
+		//    }
 	}
 
 	private void pallete() throws ParserException{
 	    PLTE plt = (PLTE)consume(ChunkType.PLTE);
 	    colorPallete=plt.data();    
-	    idat();
 	}
 
 	private void idat() throws ParserException{
@@ -55,8 +73,6 @@ public class Parser {
 		//    }
 		imageData=result;
 	    }
-
-	    iend();
 	}
 
 	private void iend() throws ParserException{
