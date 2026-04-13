@@ -4,7 +4,7 @@ import java.util.zip.Inflater;
 import java.io.PrintStream;
 import image.ImageFile;
 
-public record IDAT(int length, int type, byte[] data, int crc) implements Chunk {
+public record IDAT(int length, ChunkType type, byte[] data, int crc) implements Chunk {
     // i will hard code it the mometn i get and image i will fix it
     private int calcScanSize(ImageFile im) {
 	int bitsPerChannel = switch (im.h.colorType()) {

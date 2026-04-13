@@ -2,7 +2,7 @@ package chunk;
 
 import exceptions.TokenizationException;
 
-public record IHDR(int length, int type, byte[] data, int crc,
+public record IHDR(int length, ChunkType type, byte[] data, int crc,
 		int width,
 		int height,
 		byte bitDepth,

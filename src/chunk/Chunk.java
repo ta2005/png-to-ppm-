@@ -9,13 +9,13 @@ public sealed interface Chunk permits IHDR, IEND, IDAT, PLTE {
 	// this is the length of the data of the chuck
 	int length();
 
-	int type();
+	ChunkType type();
 
 	byte[] data();
 
 	int crc();
 
-	public static List<Chunk> chunkTokenizer(ImageFile i) throws IllegalArgumentException{
+	public static List<Chunk> chunkTokenizer(ImageFile i) throws IllegalArgumentException {
 		// i know this is inefficent but will handel it later
 		List<Chunk> l = new ArrayList<>();
 		for (int j = 0; j < 8; j++) {
@@ -31,8 +31,8 @@ public sealed interface Chunk permits IHDR, IEND, IDAT, PLTE {
 			i.cursor += length;
 			int crc = toInt(Arrays.copyOfRange(i.data, i.cursor, i.cursor + 4));
 			i.cursor += 4;
-			l.add(switch (Chunk.getName(type)) {
-				case "IHDR" -> {
+			l.add(switch (ChunkType.fromInt(type)) {
+				case IHDR -> {
 					int cursor = 0;
 					int width = toInt(Arrays.copyOfRange(data, cursor, cursor + 4));
 					cursor += 4;
@@ -43,15 +43,22 @@ public sealed interface Chunk permits IHDR, IEND, IDAT, PLTE {
 					byte compressionMethod = data[cursor++];
 					byte filterMethod = data[cursor++];
 					byte interlaceMethod = data[cursor++];
-					yield new IHDR(length, type, data, crc, width, height, bitDepth, colorType, compressionMethod,
+					yield new IHDR(length, ChunkType.fromInt(type), data, crc, width, height, bitDepth, colorType,
+							compressionMethod,
 							filterMethod, interlaceMethod);
 				}
-				case "IDAT" -> new IDAT(length, type, data, crc);
-				case "IEND" -> new IEND(length, type, data, crc);
-				case "PLTE" -> new PLTE(length, type, data, crc);
+				case IDAT -> new IDAT(length, ChunkType.fromInt(type), data, crc);
+				case IEND -> new IEND(length, ChunkType.fromInt(type), data, crc);
+				case PLTE -> new PLTE(length, ChunkType.fromInt(type), data, crc);
+				case UNKNOWN_CRITICAL -> {
+					System.err.println("Unkown Critical chunk " + getName(type));
+					throw new RuntimeException("Unknown Critical chunk: " + getName(type));
+				}
 				default -> null;
 			});
 		}
+		//this is just a hack that i may or may not chagne
+		l.add(new IEND(0,ChunkType.fromInt(0x00000001),new byte[0],0));
 		return l;
 	}
 
@@ -69,7 +76,7 @@ public sealed interface Chunk permits IHDR, IEND, IDAT, PLTE {
 	}
 
 	default void print() {
-		int type = this.type();
+		int type = this.type().code();
 		int length = this.length();
 		byte[] data = this.data();
 		int crc = this.crc();

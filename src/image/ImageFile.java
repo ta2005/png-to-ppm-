@@ -7,6 +7,7 @@ import java.util.List;
 import chunk.Chunk;
 import chunk.IHDR;
 import chunk.IDAT;
+import parser.Parser;
 
 public class ImageFile{
     //maybe the cursor will become private and it add a metod a get the next n bytes
@@ -23,10 +24,15 @@ public class ImageFile{
 	    System.out.println(e.getMessage());
 	}
     }
-    public void show() throws IllegalArgumentException{
+    public void show() throws Exception{
 	var l = Chunk.chunkTokenizer(this);
 	for(var c:l){
-	    c.print();
+	    if(c!=null)
+		c.print();
+	}
+	Parser p = new Parser(l);
+	for (int i = 0; i < p.getData().length; i++) {
+	    System.out.printf("%02X", p.getData()[i] & 0xFF);
 	}
     }
 
